@@ -170,7 +170,11 @@ public class CustomModelMainActivity extends AppCompatActivity {
     // 打开相机
     private void openCamera() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        String mTempPhotoPath = Environment.getExternalStorageDirectory() + File.separator + "photo.jpeg";
+        File photoDir = getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES);
+        if (photoDir != null && !photoDir.exists()) {
+            photoDir.mkdirs();
+        }
+        String mTempPhotoPath = new File(photoDir, "photo.jpeg").getAbsolutePath();
         imageUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".fileprovider", new File(mTempPhotoPath));
         intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
         startActivityForResult(intent, RC_CHOOSE_CAMERA);
@@ -245,45 +249,46 @@ public class CustomModelMainActivity extends AppCompatActivity {
         imgPreview.setImageBitmap(bitmap);
         tvImagePlaceholder.setVisibility(View.GONE);
         imagePreviewContainer.setVisibility(View.VISIBLE);
-        btnExecute.setVisibility(View.VISIBLE);
+        // 执行按钮现在默认可见，不需要再设置
     }
     
     // 处理从相册选择的图片
     private void showOriginImage() {
         try {
-            Pair<Integer, Integer> targetedSize = this.getTargetSize();
-            int targetWidth = targetedSize.first;
-            int maxHeight = targetedSize.second;
-            selectedBitmap = BitmapUtils.loadFromPath(this, imageUri, targetWidth, maxHeight);
-            
-            if (selectedBitmap != null) {
-                showSelectedImage(selectedBitmap);
+            if (imageUri == null) {
+                Toast.makeText(this, "Image URI is null", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            if (bitmap != null) {
+                showSelectedImage(bitmap);
             } else {
                 Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
             Log.e(TAG, "Error loading image: " + e.getMessage());
-            Toast.makeText(this, "Error loading image", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error loading image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
     // 处理拍照的图片
     private void showOriginCamera() {
         try {
-            Pair<Integer, Integer> targetedSize = this.getTargetSize();
-            int targetWidth = targetedSize.first;
-            int maxHeight = targetedSize.second;
-            Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
-            selectedBitmap = BitmapUtils.zoomImage(bitmap, targetWidth, maxHeight);
-            
-            if (selectedBitmap != null) {
-                showSelectedImage(selectedBitmap);
+            if (imageUri == null) {
+                Toast.makeText(this, "Image URI is null", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            if (bitmap != null) {
+                showSelectedImage(bitmap);
             } else {
                 Toast.makeText(this, "Failed to load camera image", Toast.LENGTH_SHORT).show();
             }
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
             Log.e(TAG, "Error loading camera image: " + e.getMessage());
-            Toast.makeText(this, "Error loading camera image", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error loading camera image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     

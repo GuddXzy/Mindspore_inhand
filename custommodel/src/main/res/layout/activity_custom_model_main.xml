@@ -129,9 +129,9 @@
         android:onClick="onClickExecute"
         android:text="@string/execute"
         android:textAllCaps="false"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:textSize="16sp"
-        android:visibility="gone" />
+        android:visibility="visible" />
 
     <!-- 输出框区域 -->
     <LinearLayout
