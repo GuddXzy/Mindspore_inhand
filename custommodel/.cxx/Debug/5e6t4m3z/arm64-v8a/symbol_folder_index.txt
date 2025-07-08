@@ -1,0 +1,1 @@
+C:\Users\27377\Desktop\Mindspore_inhand\custommodel\build\intermediates\cxx\Debug\5e6t4m3z\obj\arm64-v8a

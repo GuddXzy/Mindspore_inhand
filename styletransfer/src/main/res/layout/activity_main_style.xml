@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimary"
+    android:orientation="vertical">
+
+    <!-- 顶部工具栏 -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/style_transfer_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        app:contentInsetLeft="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetStartWithNavigation="0dp"
+        app:navigationIcon="@drawable/icon_back"
+        app:title="风格迁移"
+        app:titleTextColor="@color/black" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_gray" />
+
+    <!-- 原图区域 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="265dp"
+        android:background="@color/gray_btn">
+
+        <ImageView
+            android:id="@+id/img_origin"
+            android:layout_width="256dp"
+            android:layout_height="256dp"
+            android:layout_gravity="center"
+            android:layout_margin="10dp"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/tv_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            app:drawableTopCompat="@drawable/icon_style"
+            android:drawablePadding="10dp"
+            android:gravity="center"
+            android:text="选择图片"
+            android:textAllCaps="false"
+            android:textColor="@color/text_gray"
+            android:textSize="16sp" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center"
+            android:indeterminateDrawable="@drawable/progressbar"
+            android:visibility="invisible" />
+    </FrameLayout>
+
+    <!-- 原有四个功能按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="14dp">
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickPhoto"
+            android:text="相册"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickCamera"
+            android:text="拍照"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickRecovery"
+            android:text="恢复"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="20dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickSave"
+            android:text="保存"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- 新增：选择模型按钮行 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/btn_pick_predict"
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickPickPredict"
+            android:text="选择预测模型"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btn_pick_transfer"
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="20dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickPickTransfer"
+            android:text="选择变换模型"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- 选择风格标题 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="30dp"
+        android:text="选择风格"
+        android:textColor="@color/black"
+        android:textSize="17sp" />
+
+    <!-- 风格预览列表 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:fadeScrollbars="false"
+        android:scrollbarSize="6dp"
+        android:scrollbarStyle="outsideInset"
+        android:scrollbarThumbVertical="@color/gray"
+        android:scrollbars="vertical" />
+
+</LinearLayout>

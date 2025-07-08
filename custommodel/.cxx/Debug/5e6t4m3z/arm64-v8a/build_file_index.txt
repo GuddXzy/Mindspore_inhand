@@ -1,0 +1,1 @@
+C:\Users\27377\Desktop\Mindspore_inhand\custommodel\CMakeLists.txt

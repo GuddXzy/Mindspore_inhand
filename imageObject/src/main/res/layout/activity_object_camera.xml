@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.mindspore.imageobject.objectdetection.ui.ObjectCameraActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/object_camera_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        app:contentInsetLeft="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetStartWithNavigation="0dp"
+        app:navigationIcon="@drawable/icon_back"
+        app:title="@string/object_camery_title"
+        app:titleTextColor="@color/black" />
+
+    <com.mindspore.imageobject.camera.CameraPreview
+        android:id="@+id/camera_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/object_camera_toolbar" />
+
+    <com.mindspore.imageobject.objectdetection.ui.ObjectRectView
+        android:id="@+id/objRectView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/object_camera_toolbar" />
+
+    <!-- 新增的按钮示例：用于一键“选择自定义模型”或其它功能 -->
+     <!-- text之后再链接到strings.xml -->
+    <Button
+        android:id="@+id/btn_choose_model"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:background="@android:color/holo_blue_light"
+        android:text="选择模型"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+
+</RelativeLayout>

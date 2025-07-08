@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="custom_model_title">自定义模型</string>
+    <string name="select_model">选择模型</string>
+    <string name="select_photo">选择图片</string>
+    <string name="take_photo">拍照</string>
+    <string name="execute">执行</string>
+    <string name="select_image_placeholder">选择图片</string>
+    <string name="output_title">输出结果</string>
+    <string name="output_placeholder">模型输出将显示在这里...</string>
+    <string name="explain_title">帮助</string>
+    <string name="explain_custom_model">这是一个自定义模型模块，您可以在这里实现自己的AI模型功能。</string>
+    <string name="help">帮助</string>
+    <string name="more">更多</string>
+</resources> 

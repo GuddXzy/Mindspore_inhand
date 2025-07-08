@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimary">
+
+    <!-- ===== Scroll root ===== -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:ignore="MissingConstraints">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="30dp"
+            android:paddingBottom="30dp">
+
+            <!-- ───── 体验区分隔 ───── -->
+            <View
+                android:id="@+id/line_exp_top"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:background="@drawable/dashed_line"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/title_exp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="体验区"
+                android:textColor="@color/text_black"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toBottomOf="@id/line_exp_top"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <View
+                android:id="@+id/line_exp_bottom"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:background="@drawable/dashed_line"
+                app:layout_constraintTop_toBottomOf="@id/title_exp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- —— 体验区 · 视觉图像技术 —— -->
+            <View
+                android:id="@+id/title_exp_vision_line"
+                android:layout_width="3dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="23dp"
+                android:background="@color/main_tab_text_checked"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/line_exp_bottom" />
+
+            <TextView
+                android:id="@+id/title_exp_vision"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="28dp"
+                android:layout_marginTop="20dp"
+                android:text="视觉图像技术"
+                android:textColor="@color/text_black"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/line_exp_bottom" />
+
+            <androidx.constraintlayout.helper.widget.Flow
+                android:id="@+id/flow_exp_vision"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                app:constraint_referenced_ids="btn_posenet,btn_segmentation,
+                    btn_image,btn_gesture,btn_dance"
+                app:flow_wrapMode="aligned"
+                app:flow_maxElementsWrap="2"
+                app:flow_horizontalGap="0dp"
+                app:flow_verticalGap="17dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/title_exp_vision_line" />
+
+            <!-- —— 体验区 · 语音语义技术 —— -->
+            <View
+                android:id="@+id/title_exp_voice_line"
+                android:layout_width="3dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="23dp"
+                android:background="@color/main_tab_text_checked"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/flow_exp_vision" />
+
+            <TextView
+                android:id="@+id/title_exp_voice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="28dp"
+                android:layout_marginTop="20dp"
+                android:text="语音语义技术"
+                android:textColor="@color/text_black"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/flow_exp_vision" />
+
+            <androidx.constraintlayout.helper.widget.Flow
+                android:id="@+id/flow_exp_voice"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                app:constraint_referenced_ids="btn_image_Intelligent_poetry,
+                    btn_text_recognition,btn_texttranslation"
+                app:flow_wrapMode="aligned"
+                app:flow_maxElementsWrap="2"
+                app:flow_horizontalGap="0dp"
+                app:flow_verticalGap="17dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/title_exp_voice_line" />
+
+            <!-- ───── 高级区分隔 ───── -->
+            <View
+                android:id="@+id/line_adv_top"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/dashed_line"
+                app:layout_constraintTop_toBottomOf="@id/flow_exp_voice"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/title_adv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="高级区"
+                android:textColor="@color/text_black"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toBottomOf="@id/line_adv_top"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <View
+                android:id="@+id/line_adv_bottom"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:background="@drawable/dashed_line"
+                app:layout_constraintTop_toBottomOf="@id/title_adv"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- —— 高级区 · 视觉图像技术 —— -->
+            <View
+                android:id="@+id/title_adv_vision_line"
+                android:layout_width="3dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="23dp"
+                android:background="@color/main_tab_text_checked"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/line_adv_bottom" />
+
+            <TextView
+                android:id="@+id/title_adv_vision"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="28dp"
+                android:layout_marginTop="20dp"
+                android:text="视觉图像技术"
+                android:textColor="@color/text_black"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/line_adv_bottom" />
+
+            <androidx.constraintlayout.helper.widget.Flow
+                android:id="@+id/flow_adv_vision"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                app:constraint_referenced_ids="btn_object,btn_object_camera,btn_style_transfer,btn_custom_model"
+                app:flow_wrapMode="aligned"
+                app:flow_maxElementsWrap="2"
+                app:flow_horizontalGap="0dp"
+                app:flow_verticalGap="17dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/title_adv_vision_line" />
+
+            <!-- —— 高级区 · 语音语义技术 —— -->
+            <View
+                android:id="@+id/title_adv_voice_line"
+                android:layout_width="3dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="23dp"
+                android:background="@color/main_tab_text_checked"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/flow_adv_vision" />
+
+            <TextView
+                android:id="@+id/title_adv_voice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="28dp"
+                android:layout_marginTop="20dp"
+                android:text="语音语义技术"
+                android:textColor="@color/text_black"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/flow_adv_vision" />
+
+            <androidx.constraintlayout.helper.widget.Flow
+                android:id="@+id/flow_adv_voice"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                app:constraint_referenced_ids=""
+                app:flow_wrapMode="aligned"
+                app:flow_maxElementsWrap="2"
+                app:flow_horizontalGap="0dp"
+                app:flow_verticalGap="17dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/title_adv_voice_line" />
+
+            <!-- ───── 高级区结束虚线（可选） ───── -->
+            <View
+                android:id="@+id/line_adv_end"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/dashed_line"
+                app:layout_constraintTop_toBottomOf="@id/flow_adv_voice"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- =============== 按钮定义（保持不变） =============== -->
+            <!-- — 高级区按钮 — -->
+            <Button
+                android:id="@+id/btn_object"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="13dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_object"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_test"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <Button
+                android:id="@+id/btn_object_camera"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="18dp"
+                android:layout_marginTop="13dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_object_camera"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_video"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <Button
+                android:id="@+id/btn_style_transfer"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_style_transfer"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_style"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <Button
+                android:id="@+id/btn_custom_model"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_custom_model"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_test"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <!-- — 体验区 · 视觉按钮 — -->
+            <Button
+                android:id="@+id/btn_posenet"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="13dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_pose_net"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_posenet"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <Button
+                android:id="@+id/btn_segmentation"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="18dp"
+                android:layout_marginTop="13dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_segmentation"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_segment"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <Button
+                android:id="@+id/btn_image"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_image"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_classification"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <Button
+                android:id="@+id/btn_gesture"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="18dp"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_gesture_recognition"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_gesture_recognition"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <com.mindspore.himindspore.ui.view.IconButtonStyleView
+                android:id="@+id/btn_dance"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_dance"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:buttonImage="@drawable/btn_scene"
+                app:buttonTextName="@string/title_dance"
+                app:buttonTextAngle="@string/title_button_text_angle"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <!-- — 体验区 · 语音按钮 — -->
+            <com.mindspore.himindspore.ui.view.IconButtonStyleView
+                android:id="@+id/btn_image_Intelligent_poetry"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="13dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_intelligent_poetry"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:buttonImage="@drawable/btn_intelligent_poetry"
+                app:buttonTextName="@string/title_intelligent_poetry"
+                app:buttonTextAngle="@string/title_button_text_angle"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <Button
+                android:id="@+id/btn_text_recognition"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginEnd="18dp"
+                android:layout_marginTop="13dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_text_extraction"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_text_extraction"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <Button
+                android:id="@+id/btn_texttranslation"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/btn_vision_item"
+                android:drawablePadding="5dp"
+                android:gravity="left|center_vertical"
+                android:maxLines="1"
+                android:paddingStart="4dp"
+                android:text="@string/title_texttranslation"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/btn_text_translation"
+                app:layout_constraintWidth_percent="0.44" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
