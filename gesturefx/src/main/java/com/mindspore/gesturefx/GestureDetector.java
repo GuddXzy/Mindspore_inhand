@@ -35,7 +35,7 @@ public class GestureDetector {
 
     // ---- Thresholds (tuned larger to reduce false triggers) ----
     private static final float PALM_OPEN_RATIO = 1.8f;
-    private static final float FIST_CLOSE_RATIO = 0.9f;
+    private static final float FIST_CLOSE_RATIO = 1.1f;  // relaxed from 0.9
     private static final float GUN_EXTENSION_RATIO = 1.5f;
     private static final float GUN_CURL_RATIO = 1.0f;
     private static final float SCORE_THRESHOLD = 0.5f;
@@ -122,13 +122,13 @@ public class GestureDetector {
         if (extensionRatio < FIST_CLOSE_RATIO) {
             detectedGesture = GESTURE_FIST;
         }
+        // ---- Check GUN FIRST (before open palm): specific finger pattern ----
+        else if (isGunPose(keypoints, palmRadius)) {
+            detectedGesture = GESTURE_GUN;
+        }
         // ---- Check OPEN PALM: all fingertips spread far from palm ----
         else if (extensionRatio > PALM_OPEN_RATIO) {
             detectedGesture = GESTURE_OPEN_PALM;
-        }
-        // ---- Check GUN: thumb+index extended, ring+little curled ----
-        else if (isGunPose(keypoints, palmRadius)) {
-            detectedGesture = GESTURE_GUN;
         }
         // ---- DEFAULT ----
         else {

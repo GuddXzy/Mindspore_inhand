@@ -25,15 +25,16 @@ public class ParticleSystem {
     private final Random random = new Random();
 
     // ---- Physics constants (increased for more dynamic effects) ----
-    private static final float SPRING_K = 28.0f;       // spring stiffness for trail (was 8)
-    private static final float DAMPING = 0.85f;         // velocity damping per frame (was 0.92)
-    private static final float SPAWN_RATE = 80f;        // particles per second per spawn point (was 40)
+    private static final float SPRING_K = 35.0f;       // spring stiffness for trail (was 28)
+    private static final float DAMPING = 0.82f;         // velocity damping per frame (was 0.85)
+    private static final float SPAWN_RATE = 120f;       // particles per second per spawn point (was 80)
     private static final float MAX_LIFE = 2.0f;         // seconds
     private static final float MIN_LIFE = 0.5f;
-    private static final float EXPLOSION_FORCE = 900f;  // explosion radial force (was 600)
-    private static final float COLLAPSE_FORCE = 700f;   // collapse inward force (was 500)
-    private static final float BEAM_SPEED = 1200f;      // beam particle speed (was 900)
-    private static final float BEAM_ANGLE = 12f;        // beam cone half-angle (degrees)
+    private static final float EXPLOSION_FORCE = 1400f;  // explosion radial force (was 900)
+    private static final float COLLAPSE_FORCE = 1000f;   // collapse inward force (was 700)
+    private static final float BEAM_SPEED = 1600f;       // beam particle speed (was 1200)
+    private static final float BEAM_ANGLE = 8f;          // beam cone half-angle (tighter)
+    private static final float VORTEX_FORCE = 600f;      // vortex rotational force
 
     // ---- Keypoint spawn indices for full hand coverage ----
     // Fingertips
@@ -130,17 +131,40 @@ public class ParticleSystem {
                     velY[i] += dy * SPRING_K * deltaSeconds;
                 }
             } else if (s == 2) {
-                // Explosion: radial outward force from palm center
+                // Explosion (赫 Repulsion): radial outward + vortex swirl
                 if (palmCenters != null && hIdx < palmCenters.length && palmCenters[hIdx] != null) {
                     float dx = posX[i] - palmCenters[hIdx][0];
                     float dy = posY[i] - palmCenters[hIdx][1];
                     float dist = (float) Math.sqrt(dx * dx + dy * dy);
                     if (dist > 1f) {
+                        // Radial outward force
                         velX[i] += (dx / dist) * EXPLOSION_FORCE * deltaSeconds;
                         velY[i] += (dy / dist) * EXPLOSION_FORCE * deltaSeconds;
+                        // Tangential vortex force (perpendicular to radial)
+                        velX[i] += (-dy / dist) * VORTEX_FORCE * deltaSeconds;
+                        velY[i] += (dx / dist) * VORTEX_FORCE * deltaSeconds;
                     }
                 }
             } else if (s == 3) {
+                // Collapse (虚式茈 Purple Chaos): spiral inward + vortex
+                if (palmCenters != null && hIdx < palmCenters.length && palmCenters[hIdx] != null) {
+                    float dx = palmCenters[hIdx][0] - posX[i];
+                    float dy = palmCenters[hIdx][1] - posY[i];
+                    float dist = (float) Math.sqrt(dx * dx + dy * dy);
+                    if (dist > 1f) {
+                        // Radial inward force
+                        velX[i] += (dx / dist) * COLLAPSE_FORCE * deltaSeconds;
+                        velY[i] += (dy / dist) * COLLAPSE_FORCE * deltaSeconds;
+                        // Tangential vortex force (creates swirl)
+                        velX[i] += (-dy / dist) * VORTEX_FORCE * 0.7f * deltaSeconds;
+                        velY[i] += (dx / dist) * VORTEX_FORCE * 0.7f * deltaSeconds;
+                    } else {
+                        // Near center: tight orbit
+                        velX[i] += -dy * 5f * deltaSeconds;
+                        velY[i] += dx * 5f * deltaSeconds;
+                    }
+                }
+            } else if (s == 4) {
                 // Collapse: radial inward force toward palm center
                 if (palmCenters != null && hIdx < palmCenters.length && palmCenters[hIdx] != null) {
                     float dx = palmCenters[hIdx][0] - posX[i];
@@ -290,24 +314,31 @@ public class ParticleSystem {
 
         // Spawn extra particles at palm center for explosion/collapse
         if (targetState == 2 || targetState == 3) {
-            int extraCount = 200;
+            int extraCount = 600;  // SAT0RU-level burst (was 200)
+            float[][] palette = (targetState == 2) ? EXPLOSION_COLORS : COLLAPSE_COLORS;
             for (int i = 0; i < extraCount; i++) {
                 float ox = palmCenterX + randomOffset() * 30f;
                 float oy = palmCenterY + randomOffset() * 30f;
-                colorPalette = (targetState == 2) ? EXPLOSION_COLORS : COLLAPSE_COLORS;
-                float[] col = colorPalette[random.nextInt(colorPalette.length)];
+                float[] col = palette[random.nextInt(palette.length)];
                 int idx = findDeadParticle();
                 if (idx >= 0) {
                     posX[idx] = ox;
                     posY[idx] = oy;
                     if (targetState == 2) {
+                        // Explosion burst: random radial outward
                         float angle = random.nextFloat() * 6.2832f;
-                        velX[idx] = (float) Math.cos(angle) * EXPLOSION_FORCE * random.nextFloat();
-                        velY[idx] = (float) Math.sin(angle) * EXPLOSION_FORCE * random.nextFloat();
+                        float speed = EXPLOSION_FORCE * (0.3f + random.nextFloat() * 0.7f);
+                        velX[idx] = (float) Math.cos(angle) * speed;
+                        velY[idx] = (float) Math.sin(angle) * speed;
                     } else {
-                        // Collapse: already at center, small random movement
-                        velX[idx] = randomOffset() * 30f;
-                        velY[idx] = randomOffset() * 30f;
+                        // Collapse: spiral inward from random starting orbit
+                        float angle = random.nextFloat() * 6.2832f;
+                        float radius = 50f + random.nextFloat() * 200f;
+                        posX[idx] = palmCenterX + (float) Math.cos(angle) * radius;
+                        posY[idx] = palmCenterY + (float) Math.sin(angle) * radius;
+                        // Tangential velocity for spiral + slight inward
+                        velX[idx] = -(posY[idx] - palmCenterY) * 3f;
+                        velY[idx] = (posX[idx] - palmCenterX) * 3f;
                     }
                     life[idx] = 0.5f + random.nextFloat() * 1.5f;
                     maxLife[idx] = life[idx];
@@ -322,7 +353,7 @@ public class ParticleSystem {
 
         // Spawn beam particles at index tip
         if (targetState == 4) {
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 250; i++) {  // was 100
                 int idx = findDeadParticle();
                 if (idx >= 0) {
                     posX[idx] = palmCenterX; // palmCenterX is actually index tip for beam

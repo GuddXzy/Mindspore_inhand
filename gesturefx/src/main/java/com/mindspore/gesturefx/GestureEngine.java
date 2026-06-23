@@ -186,7 +186,7 @@ public class GestureEngine implements GLSurfaceView.Renderer {
 
         Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mViewMatrix, 0);
         GLES20.glUniformMatrix4fv(muMVPMatrix, 1, false, mMVPMatrix, 0);
-        GLES20.glUniform1f(muPointSize, 32f);  // larger point size (was 18)
+        GLES20.glUniform1f(muPointSize, 40f);  // larger point size (was 32)
         GLES20.glUniform1i(muTexture, 0);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -251,16 +251,17 @@ public class GestureEngine implements GLSurfaceView.Renderer {
         float scaleX = (float) childW / (float) previewW;
         float scaleY = (float) childH / (float) previewH;
 
-        // In portrait: image (1280×720 landscape) is rotated to (720×1280 portrait)
-        // imageX is across the 1280 dimension, imageY across the 720 dimension
-        // After rotation: imageY (0-720) maps to preview X (0-720)
-        //                imageX (0-1280) maps to preview Y (0-1280)
+        // Portrait: camera image (imgW×imgH = 1280×720 landscape) is rotated 90°
+        // After rotation: imageY (0-720) → childX axis (previewW=720)
+        //                imageX (0-1280) → childY axis (previewH=1280)
         float childX, childY;
         if (mIsPortrait) {
-            float x = mIsFrontCamera ? (imgW - imageX) : imageX;
-            childX = (x / (float) imgW) * (float) childW;
-            childY = (imageY / (float) imgH) * (float) childH;
+            // Front camera: mirror the horizontal axis (imageY in portrait)
+            float yImg = mIsFrontCamera ? (imgH - imageY) : imageY;
+            childX = (yImg / (float) imgH) * (float) childW;
+            childY = (imageX / (float) imgW) * (float) childH;
         } else {
+            // Landscape: imageX→X, imageY→Y, front camera mirrors X
             float x = mIsFrontCamera ? (imgW - imageX) : imageX;
             childX = (x / (float) imgW) * (float) childW;
             childY = (imageY / (float) imgH) * (float) childH;
