@@ -22,6 +22,7 @@
     <string name="title_pose_net"> 骨骼检测</string>
     <string name="title_style_transfer">风格迁移</string>
     <string name="title_custom_model">自定义模型</string>
+    <string name="title_gesturefx">手势交互特效</string>
     <string name="image_preview">图片预览</string>
     <string name="title_segmentation">人像分割</string>
     <string name="title_source">代码</string>

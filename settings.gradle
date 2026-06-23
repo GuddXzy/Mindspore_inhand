@@ -6,5 +6,6 @@ include ':mindsporelibrary'
 include ':imageObject'
 include ':styletransfer'
 include ':custommodel'
+include ':gesturefx'
 include ':app'
 rootProject.name = "MindSpore"

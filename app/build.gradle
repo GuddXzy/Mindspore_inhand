@@ -89,5 +89,6 @@ dependencies {
     implementation project(':hms')
     implementation project(':dance')
     implementation project(':custommodel')
+    implementation project(':gesturefx')
 
 }

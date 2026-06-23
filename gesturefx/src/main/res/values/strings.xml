@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gesturefx_title">Gesture Interaction FX</string>
+    <string name="gesturefx_mode_default">Finger Trail</string>
+    <string name="gesturefx_mode_palm">Palm Explosion</string>
+    <string name="gesturefx_mode_fist">Fist Energy Orb</string>
+    <string name="gesturefx_mode_gun">Gun Beam</string>
+</resources>

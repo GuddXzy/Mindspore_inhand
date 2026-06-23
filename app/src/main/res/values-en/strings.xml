@@ -22,6 +22,7 @@
     <string name="title_pose_net">PoseNet</string>
     <string name="title_style_transfer">Style Transfer</string>
     <string name="title_custom_model">Custom Model</string>
+    <string name="title_gesturefx">Gesture FX</string>
     <string name="image_preview">Image Preview</string>
     <string name="title_segmentation">Portrait Segmentation</string>
     <string name="title_college_faq">FAQ</string>

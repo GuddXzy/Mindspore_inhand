@@ -79,6 +79,7 @@ public class VisionFragment extends Fragment implements View.OnClickListener {
         view.findViewById(R.id.btn_gesture).setOnClickListener(this);  //onClickGestureRecognition
         view.findViewById(R.id.btn_texttranslation).setOnClickListener(this);  //onClickTextTranslation
         view.findViewById(R.id.btn_custom_model).setOnClickListener(this);  // 新增 自定义模型选择功能
+        view.findViewById(R.id.btn_gesturefx).setOnClickListener(this);  // 新增 手势交互特效
 
 
         // 暂时隐藏智能写诗和舞蹈梦工厂
@@ -132,6 +133,9 @@ public class VisionFragment extends Fragment implements View.OnClickListener {
                 break;
             case R.id.btn_custom_model:
                 ARouter.getInstance().build("/custommodel/CustomModelMainActivity").navigation();
+                break;
+            case R.id.btn_gesturefx:
+                ARouter.getInstance().build("/gesturefx/GestureFxMainActivity").navigation();
                 break;
         }
     }
