@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.opengl.GLSurfaceView;
@@ -13,6 +14,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -38,8 +40,7 @@ import java.util.List;
  * Gesture Interaction Effects Main Activity
  *
  * Real-time hand keypoint detection with 3D particle effects
- * overlaid on the camera preview. Uses HMS MLHandKeypointAnalyzer
- * for hand tracking and OpenGL ES 2.0 for particle rendering.
+ * overlaid on the camera preview. Supports both portrait and landscape.
  */
 @Route(path = "/gesturefx/GestureFxMainActivity")
 public class GestureFxMainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -59,6 +60,7 @@ public class GestureFxMainActivity extends AppCompatActivity implements View.OnC
 
     // ---- UI ----
     private TextView mModeLabel;
+    private Button mSwitchCameraBtn;
 
     // ---- Camera preview dimensions (720p, 16:9) ----
     private static final int PREVIEW_WIDTH = 1280;
@@ -75,9 +77,12 @@ public class GestureFxMainActivity extends AppCompatActivity implements View.OnC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gesturefx_main);
+
         if (savedInstanceState != null) {
             mLensType = savedInstanceState.getInt("lensType");
+            isFront = savedInstanceState.getBoolean("isFront");
         }
+
         init();
     }
 
@@ -90,14 +95,14 @@ public class GestureFxMainActivity extends AppCompatActivity implements View.OnC
         // Camera preview
         mPreview = findViewById(R.id.gesturefx_preview);
 
-        // GLSurfaceView setup (must be before setRenderer)
+        // GLSurfaceView setup
         mGlSurfaceView = findViewById(R.id.gesturefx_gl_surface);
         mGlSurfaceView.setEGLContextClientVersion(2);
         mGlSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         mGlSurfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
         mGlSurfaceView.setZOrderMediaOverlay(true);
 
-        // Gesture engine (OpenGL renderer)
+        // Gesture engine
         mGestureEngine = new GestureEngine(this);
         mGlSurfaceView.setRenderer(mGestureEngine);
         mGlSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
@@ -105,10 +110,14 @@ public class GestureFxMainActivity extends AppCompatActivity implements View.OnC
         // Mode label
         mModeLabel = findViewById(R.id.gesturefx_mode_label);
 
-        // Create hand keypoint analyzer
+        // Camera switch button
+        mSwitchCameraBtn = findViewById(R.id.gesturefx_switch_camera);
+        mSwitchCameraBtn.setOnClickListener(this);
+
+        // Create analyzer
         createHandKeypointAnalyzer();
 
-        // Check camera permissions
+        // Check permissions
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
             createLensEngine();
@@ -121,7 +130,7 @@ public class GestureFxMainActivity extends AppCompatActivity implements View.OnC
         MLHandKeypointAnalyzerSetting setting =
                 new MLHandKeypointAnalyzerSetting.Factory()
                         .setSceneType(MLHandKeypointAnalyzerSetting.TYPE_ALL)
-                        .setMaxHandResults(2) // both hands
+                        .setMaxHandResults(2)
                         .create();
         mHmsAnalyzer = MLHandKeypointAnalyzerFactory.getInstance()
                 .getHandKeypointAnalyzer(setting);
@@ -198,6 +207,8 @@ public class GestureFxMainActivity extends AppCompatActivity implements View.OnC
         }
     }
 
+    // ===== Camera Switch =====
+
     private void switchCamera() {
         isFront = !isFront;
         mLensType = isFront ? LensEngine.FRONT_LENS : LensEngine.BACK_LENS;
@@ -206,14 +217,48 @@ public class GestureFxMainActivity extends AppCompatActivity implements View.OnC
         }
         createLensEngine();
         startLensEngine();
+        updateSwitchButtonPosition();
+    }
+
+    private void updateSwitchButtonPosition() {
+        if (mSwitchCameraBtn == null) return;
+        // Move button based on orientation and camera facing
+        boolean isLandscape = getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE;
+
+        android.widget.FrameLayout.LayoutParams params =
+            (android.widget.FrameLayout.LayoutParams) mSwitchCameraBtn.getLayoutParams();
+
+        if (isLandscape) {
+            // Landscape: bottom-right
+            params.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.RIGHT;
+            params.setMargins(0, 0, 32, 32);
+        } else {
+            // Portrait: bottom-center
+            params.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
+            params.setMargins(0, 0, 0, 100);
+        }
+        mSwitchCameraBtn.setLayoutParams(params);
     }
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.gesturefx_mode_label) {
-            // Toggle camera on label click (convenient for testing)
+        if (v.getId() == R.id.gesturefx_switch_camera) {
             switchCamera();
         }
+    }
+
+    // ===== Orientation Change =====
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        boolean isPortrait = newConfig.orientation == Configuration.ORIENTATION_PORTRAIT;
+        // Update gesture engine orientation for coordinate mapping
+        if (mGestureEngine != null) {
+            mGestureEngine.setOrientation(isPortrait);
+        }
+        updateSwitchButtonPosition();
     }
 
     // ===== HMS Transactor =====
@@ -227,17 +272,14 @@ public class GestureFxMainActivity extends AppCompatActivity implements View.OnC
                 hands.add(handKeypointsSparseArray.valueAt(i));
             }
 
-            // Pass to GL engine
             mGestureEngine.updateHandKeypoints(hands, PREVIEW_WIDTH, PREVIEW_HEIGHT, isFront);
 
-            // Update UI on main thread
             final String modeLabel = mGestureEngine.getCurrentModeLabel();
             runOnUiThread(() -> mModeLabel.setText(modeLabel));
         }
 
         @Override
         public void destroy() {
-            // Nothing to clean up
         }
     }
 
@@ -246,6 +288,7 @@ public class GestureFxMainActivity extends AppCompatActivity implements View.OnC
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         outState.putInt("lensType", this.mLensType);
+        outState.putBoolean("isFront", this.isFront);
         super.onSaveInstanceState(outState);
     }
 

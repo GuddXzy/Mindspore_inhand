@@ -8,7 +8,8 @@
         <activity
             android:name=".GestureFxMainActivity"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize" />
     </application>
 
 </manifest>

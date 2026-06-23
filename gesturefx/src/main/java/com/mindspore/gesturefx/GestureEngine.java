@@ -1,6 +1,7 @@
 package com.mindspore.gesturefx;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
@@ -24,14 +25,13 @@ import javax.microedition.khronos.opengles.GL10;
 
 /**
  * OpenGL ES 2.0 renderer for gesture-driven particle effects.
- * Uses point sprites with additive blending for glow effects.
  *
- * Coordinate system: pixel-space orthographic projection.
- * All world coordinates match viewport pixel coordinates directly.
+ * Coordinate mapping replicates LensEnginePreview.onLayout() algorithm
+ * for precise overlay of particles on the camera image.
  */
 public class GestureEngine implements GLSurfaceView.Renderer {
 
-    private static final int MAX_PARTICLES = 3500;
+    private static final int MAX_PARTICLES = 5000;
     private static final int FLOATS_PER_PARTICLE = 8; // x,y,z,w, r,g,b,a
     private static final int BYTES_PER_FLOAT = 4;
     private static final int PARTICLE_STRIDE = FLOATS_PER_PARTICLE * BYTES_PER_FLOAT;
@@ -62,17 +62,20 @@ public class GestureEngine implements GLSurfaceView.Renderer {
     private int mViewportWidth;
     private int mViewportHeight;
 
+    // ---- Camera info (set from Activity) ----
+    private int mCameraImageWidth = 1280;   // camera sensor width
+    private int mCameraImageHeight = 720;   // camera sensor height
+    private boolean mIsPortrait = true;
+    private boolean mIsFrontCamera = false;
+
     // ---- Particle physics state (updated from analyzer thread) ----
     private final Object mStateLock = new Object();
-    private final List<float[]> mHandLandmarks = new ArrayList<>(); // per-hand keypoints
-    private int mPreviewWidth = 1280;
-    private int mPreviewHeight = 720;
-    private boolean mIsFrontCamera = false;
+    private final List<float[]> mHandLandmarks = new ArrayList<>();
     private boolean mHasNewData = false;
 
     // ---- Gesture state ----
-    private int mCurrentGesture = GestureDetector.GESTURE_DEFAULT;
-    private String mCurrentModeLabel = "Default";
+    private int[] mCurrentGestures = new int[]{0, 0};  // per-hand gesture
+    private String mCurrentModeLabel = "指尖轨迹";
 
     // ---- Timing ----
     private long mLastFrameTime = 0;
@@ -82,9 +85,11 @@ public class GestureEngine implements GLSurfaceView.Renderer {
         mParticleSystem = new ParticleSystem();
         mGestureDetector = new GestureDetector();
         mVertexData = new float[MAX_PARTICLES * FLOATS_PER_PARTICLE];
+        mIsPortrait = context.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_PORTRAIT;
     }
 
-    // ===== Public API (called from any thread) =====
+    // ===== Public API =====
 
     /**
      * Update hand keypoints from the HMS MLHandKeypointAnalyzer callback.
@@ -93,13 +98,13 @@ public class GestureEngine implements GLSurfaceView.Renderer {
     public void updateHandKeypoints(List<com.huawei.hms.mlsdk.handkeypoint.MLHandKeypoints> hands,
                                     int previewWidth, int previewHeight, boolean isFront) {
         synchronized (mStateLock) {
-            mPreviewWidth = previewWidth;
-            mPreviewHeight = previewHeight;
+            mCameraImageWidth = previewWidth;
+            mCameraImageHeight = previewHeight;
             mIsFrontCamera = isFront;
             mHandLandmarks.clear();
 
             for (com.huawei.hms.mlsdk.handkeypoint.MLHandKeypoints hand : hands) {
-                float[] kps = new float[21 * 3]; // x, y, score per keypoint
+                float[] kps = new float[21 * 3];
                 List<com.huawei.hms.mlsdk.handkeypoint.MLHandKeypoint> keypoints = hand.getHandKeypoints();
                 for (int i = 0; i < keypoints.size() && i < 21; i++) {
                     com.huawei.hms.mlsdk.handkeypoint.MLHandKeypoint kp = keypoints.get(i);
@@ -113,9 +118,11 @@ public class GestureEngine implements GLSurfaceView.Renderer {
         }
     }
 
-    /**
-     * Get current gesture mode label for UI display.
-     */
+    /** Update orientation (called from Activity on configuration change) */
+    public void setOrientation(boolean isPortrait) {
+        mIsPortrait = isPortrait;
+    }
+
     public String getCurrentModeLabel() {
         return mCurrentModeLabel;
     }
@@ -124,33 +131,24 @@ public class GestureEngine implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        // Transparent background for camera overlay
         GLES20.glClearColor(0f, 0f, 0f, 0f);
-
-        // Enable additive blending for glow effect
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE);
-
-        // Don't write to depth buffer
         GLES20.glDepthMask(false);
 
-        // Load shaders
         String vertexSource = loadShaderSource(R.raw.vertex_shader);
         String fragmentSource = loadShaderSource(R.raw.fragment_shader);
         mProgram = createProgram(vertexSource, fragmentSource);
         GLES20.glUseProgram(mProgram);
 
-        // Get uniform/attribute locations
         muMVPMatrix = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
         muPointSize = GLES20.glGetUniformLocation(mProgram, "uPointSize");
         muTexture = GLES20.glGetUniformLocation(mProgram, "uTexture");
         maPosition = GLES20.glGetAttribLocation(mProgram, "aPosition");
         maColor = GLES20.glGetAttribLocation(mProgram, "aColor");
 
-        // Load glow texture
         mGlowTextureId = loadGlowTexture();
 
-        // Allocate vertex buffer (direct buffer for native access)
         ByteBuffer bb = ByteBuffer.allocateDirect(MAX_PARTICLES * FLOATS_PER_PARTICLE * BYTES_PER_FLOAT);
         bb.order(ByteOrder.nativeOrder());
         mVertexBuffer = bb.asFloatBuffer();
@@ -164,8 +162,7 @@ public class GestureEngine implements GLSurfaceView.Renderer {
         mViewportWidth = width;
         mViewportHeight = height;
 
-        // Orthographic projection: pixel-coordinate world space
-        // Left=0, Right=width, Bottom=height, Top=0 (Y-down matches screen)
+        // Orthographic projection: pixel-space mapping
         Matrix.orthoM(mProjMatrix, 0, 0, width, height, 0, -1, 1);
         Matrix.setIdentityM(mViewMatrix, 0);
     }
@@ -174,35 +171,27 @@ public class GestureEngine implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-        // Compute delta time
         long now = System.nanoTime();
         float deltaSeconds = Math.min((now - mLastFrameTime) / 1_000_000_000f, 0.1f);
         mLastFrameTime = now;
 
-        // Process new hand keypoints and update particle physics
-        // (processHandInput handles all particle updates internally)
         processHandInput(deltaSeconds);
 
-        // Pack vertex data
         int count = mParticleSystem.packVertexData(mVertexData);
         if (count == 0) return;
 
-        // Upload to GPU and draw
         mVertexBuffer.position(0);
         mVertexBuffer.put(mVertexData, 0, count * FLOATS_PER_PARTICLE);
         mVertexBuffer.position(0);
 
-        // Set MVP matrix
         Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mViewMatrix, 0);
         GLES20.glUniformMatrix4fv(muMVPMatrix, 1, false, mMVPMatrix, 0);
-        GLES20.glUniform1f(muPointSize, 18f);
+        GLES20.glUniform1f(muPointSize, 32f);  // larger point size (was 18)
         GLES20.glUniform1i(muTexture, 0);
 
-        // Bind texture
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mGlowTextureId);
 
-        // Set vertex attributes (interleaved: pos(4 floats) + color(4 floats))
         mVertexBuffer.position(0);
         GLES20.glVertexAttribPointer(maPosition, 4, GLES20.GL_FLOAT, false, PARTICLE_STRIDE, mVertexBuffer);
         GLES20.glEnableVertexAttribArray(maPosition);
@@ -211,34 +200,92 @@ public class GestureEngine implements GLSurfaceView.Renderer {
         GLES20.glVertexAttribPointer(maColor, 4, GLES20.GL_FLOAT, false, PARTICLE_STRIDE, mVertexBuffer);
         GLES20.glEnableVertexAttribArray(maColor);
 
-        // Single draw call for all particles
         GLES20.glDrawArrays(GLES20.GL_POINTS, 0, count);
 
         GLES20.glDisableVertexAttribArray(maPosition);
         GLES20.glDisableVertexAttribArray(maColor);
     }
 
-    // ===== Internal Methods =====
+    // ===== Coordinate Mapping (replicates LensEnginePreview.onLayout) =====
+
+    /**
+     * Convert camera image coordinates to GL viewport pixel coordinates.
+     * Uses the same algorithm as LensEnginePreview.onLayout().
+     */
+    private float[] mapImageToView(float imageX, float imageY) {
+        // Camera image dimensions (sensor frame)
+        int imgW = mCameraImageWidth;   // 1280
+        int imgH = mCameraImageHeight;  // 720
+
+        // In portrait mode, the image is effectively rotated 90°
+        int previewW, previewH;
+        if (mIsPortrait) {
+            previewW = imgH;  // 720
+            previewH = imgW;  // 1280
+        } else {
+            previewW = imgW;
+            previewH = imgH;
+        }
+
+        int viewW = mViewportWidth;
+        int viewH = mViewportHeight;
+
+        // Compute child layout dimensions (same as LensEnginePreview.onLayout)
+        float widthRatio = (float) viewW / (float) previewW;
+        float heightRatio = (float) viewH / (float) previewH;
+
+        int childW, childH;
+        int childXOff = 0, childYOff = 0;
+
+        if (widthRatio > heightRatio) {
+            childW = viewW;
+            childH = (int) ((float) previewH * widthRatio);
+            childYOff = (childH - viewH) / 2;
+        } else {
+            childW = (int) ((float) previewW * heightRatio);
+            childH = viewH;
+            childXOff = (childW - viewW) / 2;
+        }
+
+        // Map from image coordinate to child view coordinate
+        float scaleX = (float) childW / (float) previewW;
+        float scaleY = (float) childH / (float) previewH;
+
+        // In portrait: image (1280×720 landscape) is rotated to (720×1280 portrait)
+        // imageX is across the 1280 dimension, imageY across the 720 dimension
+        // After rotation: imageY (0-720) maps to preview X (0-720)
+        //                imageX (0-1280) maps to preview Y (0-1280)
+        float childX, childY;
+        if (mIsPortrait) {
+            float x = mIsFrontCamera ? (imgW - imageX) : imageX;
+            childX = (x / (float) imgW) * (float) childW;
+            childY = (imageY / (float) imgH) * (float) childH;
+        } else {
+            float x = mIsFrontCamera ? (imgW - imageX) : imageX;
+            childX = (x / (float) imgW) * (float) childW;
+            childY = (imageY / (float) imgH) * (float) childH;
+        }
+
+        // Offset from child coordinate to view coordinate (crop)
+        float viewX = childX - childXOff;
+        float viewY = childY - childYOff;
+
+        return new float[]{viewX, viewY};
+    }
+
+    // ===== Hand Input Processing =====
 
     private void processHandInput(float deltaSeconds) {
         List<float[]> landmarks;
-        int prevWidth, prevHeight;
         boolean isFront;
 
         synchronized (mStateLock) {
             if (!mHasNewData) return;
             mHasNewData = false;
             landmarks = new ArrayList<>(mHandLandmarks);
-            prevWidth = mPreviewWidth;
-            prevHeight = mPreviewHeight;
             isFront = mIsFrontCamera;
         }
 
-        // Scale factors from camera image coords to viewport pixel coords
-        float scaleX = (float) mViewportWidth / (float) prevWidth;
-        float scaleY = (float) mViewportHeight / (float) prevHeight;
-
-        // Process each hand
         float[][] targets = new float[landmarks.size()][];
         int[] gestureTypes = new int[landmarks.size()];
         float[][] palmCenters = new float[landmarks.size()][];
@@ -247,75 +294,78 @@ public class GestureEngine implements GLSurfaceView.Renderer {
         for (int hIdx = 0; hIdx < landmarks.size(); hIdx++) {
             float[] kps = landmarks.get(hIdx);
 
-            // Convert all keypoints to viewport coordinates
-            float[][] screenKps = new float[21][3];
+            // Convert all 21 keypoints to viewport coordinates
+            float[][] viewKps = new float[21][3];
             for (int i = 0; i < 21; i++) {
-                float x = kps[i * 3];
-                float y = kps[i * 3 + 1];
-                if (isFront) x = prevWidth - x; // mirror for front camera
-                screenKps[i][0] = x * scaleX;
-                screenKps[i][1] = y * scaleY;
-                screenKps[i][2] = kps[i * 3 + 2]; // score
+                float ix = kps[i * 3];
+                float iy = kps[i * 3 + 1];
+                float[] mapped = mapImageToView(ix, iy);
+                viewKps[i][0] = mapped[0];
+                viewKps[i][1] = mapped[1];
+                viewKps[i][2] = kps[i * 3 + 2];
             }
 
             // Detect gesture
-            int gesture = mGestureDetector.detect(screenKps);
+            int gesture = mGestureDetector.detect(viewKps);
             gestureTypes[hIdx] = gesture;
 
-            // Compute palm center: average of wrist + 5 MCP joints
+            // Compute palm center: wrist + 5 MCPs
             float palmX = 0, palmY = 0;
-            int[] palmIndices = {0, 1, 5, 9, 13, 17};
-            for (int idx : palmIndices) {
-                palmX += screenKps[idx][0];
-                palmY += screenKps[idx][1];
+            int[] palmIdx = {0, 1, 5, 9, 13, 17};
+            for (int idx : palmIdx) {
+                palmX += viewKps[idx][0];
+                palmY += viewKps[idx][1];
             }
-            palmX /= palmIndices.length;
-            palmY /= palmIndices.length;
+            palmX /= palmIdx.length;
+            palmY /= palmIdx.length;
             palmCenters[hIdx] = new float[]{palmX, palmY};
 
-            // Trail target: index fingertip (8) and middle fingertip (12) average
-            float tipX = (screenKps[8][0] + screenKps[12][0]) / 2f;
-            float tipY = (screenKps[8][1] + screenKps[12][1]) / 2f;
-            targets[hIdx] = new float[]{tipX, tipY};
-
-            // Beam direction: from index MCP (5) to index tip (8)
-            float dx = screenKps[8][0] - screenKps[5][0];
-            float dy = screenKps[8][1] - screenKps[5][1];
+            // Beam direction: index MCP(5) → index tip(8)
+            float dx = viewKps[8][0] - viewKps[5][0];
+            float dy = viewKps[8][1] - viewKps[5][1];
             float len = (float) Math.sqrt(dx * dx + dy * dy);
-            if (len > 0.1f) {
-                beamDirections[hIdx] = new float[]{dx / len, dy / len};
-            } else {
-                beamDirections[hIdx] = new float[]{1f, 0f};
+            beamDirections[hIdx] = len > 0.1f
+                ? new float[]{dx / len, dy / len}
+                : new float[]{1f, 0f};
+
+            // Build targets array: [tipAvgX, tipAvgY, kp0X, kp0Y, kp1X, kp1Y, ...]
+            // Include all major keypoints for full hand particle coverage
+            int[] spawnKps = {4, 8, 12, 16, 20, 5, 9, 13, 17, 1, 6, 10, 14, 18};
+            targets[hIdx] = new float[2 + spawnKps.length * 2];
+            // Primary tip average (index + middle)
+            targets[hIdx][0] = (viewKps[8][0] + viewKps[12][0]) / 2f;
+            targets[hIdx][1] = (viewKps[8][1] + viewKps[12][1]) / 2f;
+            // All spawn keypoints
+            for (int k = 0; k < spawnKps.length; k++) {
+                targets[hIdx][2 + k * 2]     = viewKps[spawnKps[k]][0];
+                targets[hIdx][2 + k * 2 + 1] = viewKps[spawnKps[k]][1];
             }
 
-            // Apply gesture effects to particles
-            int prevGesture = mCurrentGesture;
-            if (gesture != GestureDetector.GESTURE_DEFAULT
-                && gesture != prevGesture
-                && gesture != GestureDetector.GESTURE_DEFAULT) {
+            // Apply gesture transitions
+            int prevGesture = (hIdx < mCurrentGestures.length) ? mCurrentGestures[hIdx] : 0;
+            if (gesture != prevGesture && gesture != GestureDetector.GESTURE_DEFAULT) {
                 mParticleSystem.applyGesture(hIdx, gesture, palmX, palmY,
                     beamDirections[hIdx][0], beamDirections[hIdx][1]);
             }
-            mCurrentGesture = gesture;
-
-            // Update mode label
-            switch (gesture) {
-                case GestureDetector.GESTURE_OPEN_PALM:
-                    mCurrentModeLabel = "Palm Explosion";
-                    break;
-                case GestureDetector.GESTURE_FIST:
-                    mCurrentModeLabel = "Fist Energy Orb";
-                    break;
-                case GestureDetector.GESTURE_GUN:
-                    mCurrentModeLabel = "Gun Beam";
-                    break;
-                default:
-                    mCurrentModeLabel = "Finger Trail";
-                    break;
+            if (hIdx < mCurrentGestures.length) {
+                mCurrentGestures[hIdx] = gesture;
             }
         }
 
-        // Update particle system with processed targets for trail mode
+        // Chinese mode labels
+        if (gestureTypes.length > 0) {
+            switch (gestureTypes[0]) {
+                case GestureDetector.GESTURE_OPEN_PALM:
+                    mCurrentModeLabel = "掌心爆发"; break;
+                case GestureDetector.GESTURE_FIST:
+                    mCurrentModeLabel = "握拳能量球"; break;
+                case GestureDetector.GESTURE_GUN:
+                    mCurrentModeLabel = "枪形光束"; break;
+                default:
+                    mCurrentModeLabel = "指尖轨迹"; break;
+            }
+        }
+
         mParticleSystem.update(deltaSeconds, targets, gestureTypes, palmCenters, beamDirections);
     }
 
@@ -354,10 +404,8 @@ public class GestureEngine implements GLSurfaceView.Renderer {
             throw new RuntimeException("Program link failed: " + log);
         }
 
-        // Shaders can be deleted after linking
         GLES20.glDeleteShader(vertexShader);
         GLES20.glDeleteShader(fragmentShader);
-
         return program;
     }
 
@@ -373,7 +421,6 @@ public class GestureEngine implements GLSurfaceView.Renderer {
             GLES20.glDeleteShader(shader);
             throw new RuntimeException("Shader compile failed: " + log);
         }
-
         return shader;
     }
 
@@ -382,19 +429,16 @@ public class GestureEngine implements GLSurfaceView.Renderer {
         GLES20.glGenTextures(1, textureId, 0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId[0]);
 
-        // Texture filtering
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
 
-        // Load from drawable resource
         Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.particle_glow);
         if (bitmap != null) {
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
             bitmap.recycle();
         }
-
         return textureId[0];
     }
 }

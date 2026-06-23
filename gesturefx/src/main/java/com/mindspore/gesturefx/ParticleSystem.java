@@ -10,7 +10,7 @@ import java.util.Random;
 public class ParticleSystem {
 
     // ---- Particle structure (flat arrays for GPU upload efficiency) ----
-    private static final int MAX_PARTICLES = 3500;
+    private static final int MAX_PARTICLES = 5000;
 
     // Per-particle data
     private final float[] posX, posY;
@@ -24,48 +24,64 @@ public class ParticleSystem {
     private int activeCount = 0;
     private final Random random = new Random();
 
-    // ---- Physics constants ----
-    private static final float SPRING_K = 8.0f;       // spring stiffness for trail
-    private static final float DAMPING = 0.92f;        // velocity damping per frame
-    private static final float SPAWN_RATE = 40f;       // particles per second per fingertip
-    private static final float MAX_LIFE = 2.0f;        // seconds
-    private static final float MIN_LIFE = 0.6f;
-    private static final float EXPLOSION_FORCE = 600f;  // explosion radial force
-    private static final float COLLAPSE_FORCE = 500f;   // collapse inward force
-    private static final float BEAM_SPEED = 900f;       // beam particle speed
-    private static final float BEAM_ANGLE = 15f;        // beam cone half-angle (degrees)
+    // ---- Physics constants (increased for more dynamic effects) ----
+    private static final float SPRING_K = 28.0f;       // spring stiffness for trail (was 8)
+    private static final float DAMPING = 0.85f;         // velocity damping per frame (was 0.92)
+    private static final float SPAWN_RATE = 80f;        // particles per second per spawn point (was 40)
+    private static final float MAX_LIFE = 2.0f;         // seconds
+    private static final float MIN_LIFE = 0.5f;
+    private static final float EXPLOSION_FORCE = 900f;  // explosion radial force (was 600)
+    private static final float COLLAPSE_FORCE = 700f;   // collapse inward force (was 500)
+    private static final float BEAM_SPEED = 1200f;      // beam particle speed (was 900)
+    private static final float BEAM_ANGLE = 12f;        // beam cone half-angle (degrees)
+
+    // ---- Keypoint spawn indices for full hand coverage ----
+    // Fingertips
+    private static final int[] TIP_INDICES = {4, 8, 12, 16, 20};
+    // MCP joints (knuckles)
+    private static final int[] MCP_INDICES = {1, 5, 9, 13, 17};
+    // PIP joints (middle knuckles)
+    private static final int[] PIP_INDICES = {2, 6, 10, 14, 18};
 
     // ---- Accumulator for frame-rate independent spawning ----
     private float spawnAccum = 0f;
 
-    // ---- Color palettes ----
-    // Trail: cyan to magenta
+    // ---- Color palettes (SAT0RU-inspired, vivid) ----
+    // Trail: cyberpunk cyan-purple-pink
     private static final float[][] TRAIL_COLORS = {
-        {0.0f, 1.0f, 1.0f},   // cyan
-        {0.2f, 0.5f, 1.0f},   // light blue
-        {0.6f, 0.2f, 1.0f},   // purple
-        {1.0f, 0.0f, 1.0f},   // magenta
+        {0.0f, 1.0f, 1.0f},     // cyan #00FFFF
+        {0.0f, 0.7f, 1.0f},     // light blue #00B3FF
+        {0.4f, 0.0f, 1.0f},     // purple #6600FF
+        {0.7f, 0.0f, 1.0f},     // violet #B300FF
+        {1.0f, 0.0f, 0.8f},     // hot pink #FF00CC
+        {0.0f, 1.0f, 0.5f},     // spring green #00FF80
     };
-    // Explosion: orange to gold
+    // Explosion: fire orange-gold-white
     private static final float[][] EXPLOSION_COLORS = {
-        {1.0f, 0.4f, 0.0f},   // orange
-        {1.0f, 0.6f, 0.1f},   // dark orange
-        {1.0f, 0.8f, 0.0f},   // gold
-        {1.0f, 0.9f, 0.2f},   // light gold
+        {1.0f, 0.3f, 0.0f},     // deep orange #FF4D00
+        {1.0f, 0.5f, 0.0f},     // orange #FF8000
+        {1.0f, 0.7f, 0.0f},     // amber #FFB300
+        {1.0f, 0.9f, 0.1f},     // gold #FFE61A
+        {1.0f, 1.0f, 0.4f},     // light yellow #FFFF66
+        {1.0f, 0.6f, 1.0f},     // warm pink
     };
-    // Collapse: white to blue
+    // Collapse: blue-violet-white core
     private static final float[][] COLLAPSE_COLORS = {
-        {1.0f, 1.0f, 1.0f},   // white
-        {0.5f, 0.8f, 1.0f},   // light blue
-        {0.0f, 0.4f, 1.0f},   // blue
-        {0.0f, 0.2f, 0.6f},   // deep blue
+        {1.0f, 1.0f, 1.0f},     // white core
+        {0.3f, 0.6f, 1.0f},     // light blue #4D99FF
+        {0.0f, 0.3f, 1.0f},     // blue #004DFF
+        {0.3f, 0.0f, 1.0f},     // indigo #4D00FF
+        {0.6f, 0.0f, 1.0f},     // violet #9900FF
+        {0.0f, 0.8f, 1.0f},     // sky blue
     };
-    // Beam: bright cyan to white
+    // Beam: bright cyan-white laser
     private static final float[][] BEAM_COLORS = {
-        {0.0f, 1.0f, 1.0f},   // cyan
-        {0.3f, 0.9f, 1.0f},   // light cyan
-        {0.8f, 1.0f, 1.0f},   // near white
-        {1.0f, 1.0f, 1.0f},   // white
+        {0.0f, 1.0f, 1.0f},     // cyan #00FFFF
+        {0.2f, 0.9f, 1.0f},     // pale cyan
+        {0.5f, 1.0f, 1.0f},     // aqua
+        {0.8f, 1.0f, 1.0f},     // near white
+        {1.0f, 1.0f, 1.0f},     // white core
+        {0.0f, 0.8f, 1.0f},     // cerulean
     };
 
     public ParticleSystem() {
@@ -162,10 +178,26 @@ public class ParticleSystem {
                         int gType = (gestureTypes != null && hIdx < gestureTypes.length)
                             ? gestureTypes[hIdx] : GestureDetector.GESTURE_DEFAULT;
 
-                        // Only spawn trails in default mode (not during special gestures)
+                        // Only spawn trails in default mode
                         if (gType == GestureDetector.GESTURE_DEFAULT) {
-                            spawnParticle(targets[hIdx][0] + randomOffset(),
-                                         targets[hIdx][1] + randomOffset(),
+                            // Spawn from multiple keypoints for full hand coverage
+                            if (targets[hIdx].length > 2) {
+                                // targets[hIdx] contains [tipX, tipY, ... keypoint Xs and Ys]
+                                // Spawn at a random subset of provided positions
+                                int kpCount = (targets[hIdx].length - 2) / 2;
+                                for (int k = 0; k < Math.min(3, kpCount); k++) {
+                                    int idx = k * 2 + 2;
+                                    if (idx + 1 < targets[hIdx].length) {
+                                        spawnParticle(
+                                            targets[hIdx][idx] + randomOffset() * 3f,
+                                            targets[hIdx][idx + 1] + randomOffset() * 3f,
+                                            1, hIdx);
+                                    }
+                                }
+                            }
+                            // Also spawn at the primary tip position
+                            spawnParticle(targets[hIdx][0] + randomOffset() * 5f,
+                                         targets[hIdx][1] + randomOffset() * 5f,
                                          1, hIdx);
                         }
                     }
