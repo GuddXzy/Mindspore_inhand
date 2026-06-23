@@ -31,7 +31,7 @@ import javax.microedition.khronos.opengles.GL10;
  */
 public class GestureEngine implements GLSurfaceView.Renderer {
 
-    private static final int MAX_PARTICLES = 5000;
+    private static final int MAX_PARTICLES = 6000;
     private static final int FLOATS_PER_PARTICLE = 8; // x,y,z,w, r,g,b,a
     private static final int BYTES_PER_FLOAT = 4;
     private static final int PARTICLE_STRIDE = FLOATS_PER_PARTICLE * BYTES_PER_FLOAT;
@@ -186,7 +186,7 @@ public class GestureEngine implements GLSurfaceView.Renderer {
 
         Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mViewMatrix, 0);
         GLES20.glUniformMatrix4fv(muMVPMatrix, 1, false, mMVPMatrix, 0);
-        GLES20.glUniform1f(muPointSize, 40f);  // larger point size (was 32)
+        GLES20.glUniform1f(muPointSize, 55f);  // SAT0RU-level glow size
         GLES20.glUniform1i(muTexture, 0);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -331,7 +331,7 @@ public class GestureEngine implements GLSurfaceView.Renderer {
 
             // Build targets array: [tipAvgX, tipAvgY, kp0X, kp0Y, kp1X, kp1Y, ...]
             // Include all major keypoints for full hand particle coverage
-            int[] spawnKps = {4, 8, 12, 16, 20, 5, 9, 13, 17, 1, 6, 10, 14, 18};
+            int[] spawnKps = {4, 8, 12, 16, 20, 5, 9, 13, 17, 2, 6, 10, 14, 18, 1, 0};
             targets[hIdx] = new float[2 + spawnKps.length * 2];
             // Primary tip average (index + middle)
             targets[hIdx][0] = (viewKps[8][0] + viewKps[12][0]) / 2f;
@@ -342,11 +342,14 @@ public class GestureEngine implements GLSurfaceView.Renderer {
                 targets[hIdx][2 + k * 2 + 1] = viewKps[spawnKps[k]][1];
             }
 
-            // Apply gesture transitions
+            // Trigger effect on gesture transition (once per state change)
             int prevGesture = (hIdx < mCurrentGestures.length) ? mCurrentGestures[hIdx] : 0;
             if (gesture != prevGesture && gesture != GestureDetector.GESTURE_DEFAULT) {
-                mParticleSystem.applyGesture(hIdx, gesture, palmX, palmY,
+                mParticleSystem.triggerEffect(hIdx, gesture, palmX, palmY,
                     beamDirections[hIdx][0], beamDirections[hIdx][1]);
+            }
+            if (gesture == GestureDetector.GESTURE_DEFAULT && prevGesture != GestureDetector.GESTURE_DEFAULT) {
+                // Returning to trail mode: reset gesture state
             }
             if (hIdx < mCurrentGestures.length) {
                 mCurrentGestures[hIdx] = gesture;
@@ -357,11 +360,11 @@ public class GestureEngine implements GLSurfaceView.Renderer {
         if (gestureTypes.length > 0) {
             switch (gestureTypes[0]) {
                 case GestureDetector.GESTURE_OPEN_PALM:
-                    mCurrentModeLabel = "掌心爆发"; break;
+                    mCurrentModeLabel = "赫·掌心爆发"; break;
                 case GestureDetector.GESTURE_FIST:
-                    mCurrentModeLabel = "握拳能量球"; break;
+                    mCurrentModeLabel = "茈·握拳混沌"; break;
                 case GestureDetector.GESTURE_GUN:
-                    mCurrentModeLabel = "枪形光束"; break;
+                    mCurrentModeLabel = "苍·枪形光束"; break;
                 default:
                     mCurrentModeLabel = "指尖轨迹"; break;
             }
