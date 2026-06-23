@@ -5,4 +5,6 @@
     <string name="gesturefx_mode_palm">掌心爆发</string>
     <string name="gesturefx_mode_fist">握拳能量球</string>
     <string name="gesturefx_mode_gun">枪形光束</string>
+    <string name="app_need_permission">需要相机权限，请到"应用信息 -> 权限"中授予。</string>
+    <string name="app_permission_by_hand">去手动授权</string>
 </resources>

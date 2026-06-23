@@ -5,4 +5,6 @@
     <string name="gesturefx_mode_palm">Palm Explosion</string>
     <string name="gesturefx_mode_fist">Fist Energy Orb</string>
     <string name="gesturefx_mode_gun">Gun Beam</string>
+    <string name="app_need_permission">Camera permission is required. Please grant it in App Info -> Permissions.</string>
+    <string name="app_permission_by_hand">Go to Settings</string>
 </resources>

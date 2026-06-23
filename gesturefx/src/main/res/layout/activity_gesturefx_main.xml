@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Layer 1: Camera preview (HMS LensEngine) -->
+    <com.mindspore.hms.camera.LensEnginePreview
+        android:id="@+id/gesturefx_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Layer 2: Transparent GL overlay for particles -->
+    <android.opengl.GLSurfaceView
+        android:id="@+id/gesturefx_gl_surface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Layer 3: UI controls on top -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/gesturefx_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:contentInsetLeft="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetStartWithNavigation="0dp"
+        app:navigationIcon="@drawable/icon_back"
+        app:title=""
+        app:titleTextColor="@android:color/white" />
+
+    <TextView
+        android:id="@+id/gesturefx_mode_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="80dp"
+        android:background="#AA000000"
+        android:padding="8dp"
+        android:text="@string/gesturefx_mode_default"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+
+</FrameLayout>

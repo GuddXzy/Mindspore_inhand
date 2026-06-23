@@ -54,6 +54,9 @@ dependencies {
     implementation project(path: ':hms')
     implementation project(path: ':common')
 
+    // HMS Hand Keypoint SDK (needed directly since hms uses 'implementation')
+    implementation 'com.huawei.hms:ml-computer-vision-handkeypoint:2.1.0.300'
+
     // ARouter
     implementation 'com.alibaba:arouter-api:1.5.2'
     annotationProcessor 'com.alibaba:arouter-compiler:1.5.2'
